@@ -1,0 +1,144 @@
+
+# ログファイル
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Node.jsの診断レポート（https://nodejs.org/api/report.html）
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# 実行時に作られる一時データ
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# jscoverage/JSCoverが生成する計測用ライブラリ
+lib-cov
+
+# istanbulなどが生成するテストカバレッジ
+coverage
+*.lcov
+
+# nycのテストカバレッジ
+.nyc_output
+
+# Gruntの中間ファイル（https://gruntjs.com/creating-plugins#storing-task-files）
+.grunt
+
+# Bowerの依存パッケージ（https://bower.io/）
+bower_components
+
+# node-wafの設定ファイル
+.lock-wscript
+
+# ビルド済みNode.js拡張（https://nodejs.org/api/addons.html）
+build/Release
+
+# 依存パッケージのディレクトリ
+node_modules/
+jspm_packages/
+
+# Snowpackの依存パッケージ（https://snowpack.dev/）
+web_modules/
+
+# TypeScriptのキャッシュ
+*.tsbuildinfo
+
+# npmのキャッシュ（任意）
+.npm
+
+# ESLintのキャッシュ（任意）
+.eslintcache
+
+# Stylelintのキャッシュ（任意）
+.stylelintcache
+
+# REPLの入力履歴（任意）
+.node_repl_history
+
+# npm packが作る配布アーカイブ
+*.tgz
+
+# Yarnの整合性確認ファイル
+.yarn-integrity
+
+# dotenvの環境変数ファイル
+.env
+.env.*
+!.env.example
+
+# Parcel Bundlerのキャッシュ（https://parceljs.org/）
+.cache
+.parcel-cache
+
+# Next.jsのビルド成果物
+.next
+out
+
+# Nuxt.jsのビルド・生成成果物
+.nuxt
+dist
+.output
+
+# Gatsby関連ファイル
+.cache/
+# Next.jsではなくGatsbyを使う場合は、次のpublic除外を有効にする
+# 参考: https://nextjs.org/blog/next-9-1#public-directory-support
+# public
+
+# VuePressのビルド成果物
+.vuepress/dist
+
+# VuePress v2の一時ファイル
+.temp
+
+# SvelteKitのキャッシュ
+.svelte-kit/
+
+# VitePressのビルド成果物
+**/.vitepress/dist
+
+# VitePressのキャッシュ
+**/.vitepress/cache
+
+# Docusaurusのキャッシュと生成ファイル
+.docusaurus
+
+# Serverless Frameworkの生成ディレクトリ
+.serverless/
+
+# FuseBoxのキャッシュ
+.fusebox/
+
+# DynamoDB Localのデータファイル
+.dynamodb/
+
+# Firebaseのキャッシュ
+.firebase/
+
+# TernJSが使うポート情報
+.tern-port
+
+# VS Code拡張機能のテスト用バージョン
+.vscode-test
+
+# pnpmの保存領域
+.pnpm-store
+
+# Yarn v3の設定とパッケージ保存領域
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Viteが生成する一時ファイル
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
