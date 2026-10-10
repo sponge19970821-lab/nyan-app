@@ -1,0 +1,23 @@
+ # APIとフロントエンドをまとめて起動するCompose構成
+version: "3"
+services:
+  # Spring Bootバックエンドのビルド・公開設定
+  api:
+    # backend/DockerfileからSpring Bootコンテナをビルドする
+    build: ./backend
+    # ホスト側8080番をコンテナ側8080番へ転送する
+    ports:
+      - "8080:8080"
+    # ソースを共有し、開発中の変更をコンテナから参照できるようにする
+    volumes:
+      - ./backend:/app
+  # Next.jsフロントエンドのビルド・公開設定
+  frontend:
+    # frontend/DockerfileからNext.jsコンテナをビルドする
+    build: ./frontend
+    # ホスト側3000番をコンテナ側3000番へ転送する
+    ports:
+      - "3000:3000"
+    # フロントエンドソースをコンテナ内の作業場所へ共有する
+    volumes:
+      - ./frontend:/app

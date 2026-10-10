@@ -1,0 +1,79 @@
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Maven 設定ファイル（pom.xml）
+  
+  このファイルはプロジェクトの設定を定義します：
+  1. どのライブラリを使うか（dependencies）
+  2. どのように Java コードをコンパイルするか（build）
+  3. プロジェクト情報（groupId, artifactId など）
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- プロジェクト情報 -->
+    <groupId>com.nyanapp</groupId>  <!-- プロジェクト ID（社名のようなもの） -->
+    <artifactId>nyan-app-backend</artifactId>  <!-- プロジェクト名 -->
+    <version>1.0.0</version>  <!-- バージョン番号 -->
+    <name>Nyan App Backend</name>  <!-- プロジェクトの日本語名 -->
+
+    <!-- Spring Boot の親プロジェクトを継承 -->
+    <!-- Spring Boot の設定を自動的に使える -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.5</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <java.version>17</java.version>  <!-- Java のバージョン -->
+        <maven.compiler.source>17</maven.compiler.source>  <!-- コンパイル元の Java バージョン -->
+        <maven.compiler.target>17</maven.compiler.target>  <!-- コンパイル先の Java バージョン -->
+    </properties>
+
+    <!-- 使用するライブラリ（依存関係）を定義 -->
+    <dependencies>
+        <!-- Spring Boot Web：Web API を作るのに必要 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Data JPA：データベース操作を簡単にするライブラリ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- H2 Database：インメモリデータベース（開発用） -->
+        <!-- アプリを再起動するとデータが消える -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Spring Boot Test：テストコードを書くのに必要 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- ビルド設定 -->
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin：Maven でアプリをビルド・実行するプラグイン -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

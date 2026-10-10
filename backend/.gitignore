@@ -1,0 +1,25 @@
+# Mavenのビルド成果物や一時ファイル
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# IDEのプロジェクト設定
+.idea/
+.classpath
+.project
+.settings/
+*.iml
+*.iws
+*.swp
+*.swo
+*~
+
+# OSが作成する不要ファイル
+.DS_Store
+Thumbs.db
