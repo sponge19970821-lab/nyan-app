@@ -1,26 +1,38 @@
 "use client";
 
+// フォームの入力値をReactの状態として保持する
 import { useState } from "react";
+// ペット管理画面へ戻るリンクを作る
 import Link from "next/link";
 
+// 目やに掃除の実施状況を記録する画面を表示する
 export default function EyesPage() {
+    // 記録対象の日付。初期値には今日を設定する
     const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
+    // 目やに掃除を実施したかどうかをチェック状態で保持する
     const [eyeCleaned, setEyeCleaned] = useState(false);
+    // 目の状態や分泌物について記録する自由入力メモ
     const [notes, setNotes] = useState("");
 
+    // 入力内容を確認用ログへまとめ、送信完了を知らせる
     const handleSubmit = (e: React.FormEvent) => {
+        // ブラウザー標準のフォーム送信による再読み込みを止める
         e.preventDefault();
+        // 日付、実施有無、メモをまとめて開発者ツールに出力する
         console.log({
             logDate,
             eyeCleaned,
             notes,
         });
+        // 記録の送信操作が終わったことを利用者へ知らせる
         alert("目やに掃除の記録を送信しました！");
     };
 
+    // 戻るリンクと日付・実施状況・メモのフォームを配置する
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50">
             <div className="w-full max-w-2xl">
+                {/* ペット管理画面へ戻るリンク */}
                 <Link href="/pet">
                     <button className="mb-6 text-blue-500 hover:text-blue-700 font-semibold">
                         ← 戻る
@@ -29,7 +41,9 @@ export default function EyesPage() {
 
                 <section className="bg-white p-6 rounded-lg shadow">
                     <h1 className="text-3xl font-bold mb-6">👁️ 目やに掃除</h1>
+                    {/* 入力内容を送信処理へ渡す目やに掃除の記録フォーム */}
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        {/* 目やに掃除をした日付を指定する */}
                         <label className="flex flex-col">
                             日付
                             <input
@@ -41,6 +55,7 @@ export default function EyesPage() {
                             />
                         </label>
 
+                        {/* 掃除を実施した場合にチェックを付ける */}
                         <label className="flex items-center gap-3">
                             <input
                                 type="checkbox"
@@ -51,6 +66,7 @@ export default function EyesPage() {
                             <span className="font-semibold">目やにを掃除しました</span>
                         </label>
 
+                        {/* 目の赤みなど気づいた状態を補足する */}
                         <label className="flex flex-col">
                             メモ
                             <textarea
@@ -61,6 +77,7 @@ export default function EyesPage() {
                             />
                         </label>
 
+                        {/* 入力した目やに掃除記録を送信するボタン */}
                         <button
                             type="submit"
                             className="bg-indigo-400 text-white p-3 rounded hover:bg-indigo-500 font-semibold mt-4"

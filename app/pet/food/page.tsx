@@ -17,7 +17,7 @@ export default function FoodPage() {
     // おやつの名前を保存する state
     const [treatName, setTreatName] = useState("");
 
-    // ご飯のフォームを送信したときの処理
+    // ご飯のフォームを送信したとき、入力を端末内の履歴へ追加する
     const handleFoodSubmit = (e: React.FormEvent) => {
         // ページの再読み込みを止める
         e.preventDefault();
@@ -25,7 +25,7 @@ export default function FoodPage() {
         // localStorage に保存済みのご飯の履歴を取り出す
         // まだ何もなければ [] を使う
         const foodHistory = JSON.parse(localStorage.getItem("foodHistory") || "[]");
-        // 今の入力内容を配列に追加する
+        // 数値へ変換した量と選択した食欲を、日付と一緒に履歴へ追加する
         foodHistory.push({
             date: logDate,
             amount: parseFloat(foodAmount),
@@ -34,7 +34,7 @@ export default function FoodPage() {
         // 追加した配列を localStorage に JSON 形式で保存する
         localStorage.setItem("foodHistory", JSON.stringify(foodHistory));
         
-        // デバッグ用に入力内容をコンソールへ出す
+        // 保存内容を開発者ツールから確認できるよう出力する
         console.log({
             logDate,
             foodAmount,
@@ -44,7 +44,7 @@ export default function FoodPage() {
         alert("ごはんの記録を送信しました！");
     };
 
-    // おやつのフォームを送信したときの処理
+    // おやつの入力内容を確認用ログへ出し、送信完了を知らせる
     const handleTreatSubmit = (e: React.FormEvent) => {
         // フォームのデフォルト動作を止める
         e.preventDefault();
@@ -69,12 +69,14 @@ export default function FoodPage() {
                     </button>
                 </Link>
 
+                {/* ご飯とおやつを別々に記録する2つのフォーム */}
                 <div className="space-y-6">
                     {/* ご飯の記録フォームの枠 */}
                     <section className="bg-white p-6 rounded-lg shadow">
                         <h1 className="text-3xl font-bold mb-6">🍽️ ごはんの記録</h1>
                         {/* ご飯の入力フォーム。送信時は handleFoodSubmit を実行する */}
                         <form onSubmit={handleFoodSubmit} className="flex flex-col gap-4">
+                            {/* 記録対象の日付を選ぶ */}
                             <label className="flex flex-col">
                                 日付
                                 <input
@@ -86,6 +88,7 @@ export default function FoodPage() {
                                 />
                             </label>
 
+                            {/* 食べたご飯の量をグラム単位で入力する */}
                             <label className="flex flex-col">
                                 ご飯の量（g）
                                 <input
@@ -98,8 +101,10 @@ export default function FoodPage() {
                                 />
                             </label>
 
+                            {/* その日の食欲を3段階から1つ選ぶ */}
                             <div className="flex flex-col">
                                 <span className="font-semibold mb-3">食欲</span>
+                                {/* 食欲がある場合の選択肢 */}
                                 <label className="flex items-center gap-3 mb-2">
                                     <input
                                         type="radio"
@@ -111,6 +116,7 @@ export default function FoodPage() {
                                     />
                                     <span>食欲がある</span>
                                 </label>
+                                {/* 食欲がやや落ちている場合の選択肢 */}
                                 <label className="flex items-center gap-3 mb-2">
                                     <input
                                         type="radio"
@@ -122,6 +128,7 @@ export default function FoodPage() {
                                     />
                                     <span>あまり食欲がない</span>
                                 </label>
+                                {/* 食べない場合の選択肢 */}
                                 <label className="flex items-center gap-3">
                                     <input
                                         type="radio"
@@ -135,6 +142,7 @@ export default function FoodPage() {
                                 </label>
                             </div>
 
+                            {/* 入力した食事内容を履歴へ保存する */}
                             <button
                                 type="submit"
                                 className="bg-orange-400 text-white p-3 rounded hover:bg-orange-500 font-semibold mt-4"
@@ -149,6 +157,7 @@ export default function FoodPage() {
                         <h2 className="text-3xl font-bold mb-6">🍪 おやつの記録</h2>
                         {/* おやつの入力フォーム。送信時は handleTreatSubmit を実行する */}
                         <form onSubmit={handleTreatSubmit} className="flex flex-col gap-4">
+                            {/* 記録するおやつの商品名や種類を入力する */}
                             <label className="flex flex-col">
                                 おやつの名前
                                 <input
@@ -161,6 +170,7 @@ export default function FoodPage() {
                                 />
                             </label>
 
+                            {/* 与えたおやつの量をグラム単位で入力する */}
                             <label className="flex flex-col">
                                 おやつの量（g）
                                 <input
@@ -173,6 +183,7 @@ export default function FoodPage() {
                                 />
                             </label>
 
+                            {/* おやつの入力値を送信する */}
                             <button
                                 type="submit"
                                 className="bg-green-400 text-white p-3 rounded hover:bg-green-500 font-semibold mt-4"
