@@ -1,7 +1,7 @@
 "use client";
 
 // React の状態管理と副作用を使うためのimport
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 // 別ページへのリンクを作るためのimport
 import Link from "next/link";
 import Image from "next/image";
@@ -39,6 +39,8 @@ export default function PetForm() {
     // 基本プロフィールが保存済みか、編集フォームを開いているかを管理する
     const [hasSavedProfile, setHasSavedProfile] = useState(false);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const dashboardRef = useRef<HTMLDivElement>(null);
+    const shouldScrollToDashboard = useRef(false);
     // グラフで使う体重・ご飯のデータ配列を保存するstate
     const [graphData, setGraphData] = useState<any[]>([]);
     // ご飯の記録を保存しておくstate
@@ -184,6 +186,15 @@ export default function PetForm() {
         // グラフ用データをstateに入れる
         setGraphData(data);
     }, []);
+
+    useEffect(() => {
+        if (!hasSavedProfile || !shouldScrollToDashboard.current) {
+            return;
+        }
+
+        shouldScrollToDashboard.current = false;
+        dashboardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [hasSavedProfile]);
 
     // 日付を YYYY-MM-DD の形式にそろえて、localStorage と比較しやすくする関数
     const formatDateKey = (date: Date) => {
@@ -586,7 +597,7 @@ export default function PetForm() {
 
         // 文字列入力を数値に変換し、日付や数値が不正なら中止する
         const value = Number(weightRecordValue);
-        if (!weightRecordDate || Number.isNaN(value)) {
+        if (!weightRecordDate || weightRecordValue.trim() === "" || !Number.isFinite(value)) {
             return;
         }
 
@@ -603,6 +614,13 @@ export default function PetForm() {
 
         // 更新した体重履歴を端末内へ保存する
         localStorage.setItem("weightHistory", JSON.stringify(updated));
+        // 保存した体重を同じ日付のグラフデータへ反映する
+        setGraphData((currentData) => {
+            const dataByDate = new Map(currentData.map((entry: any) => [entry.date, entry]));
+            const currentEntry = dataByDate.get(weightRecordDate) || { date: weightRecordDate };
+            dataByDate.set(weightRecordDate, { ...currentEntry, weight: value });
+            return Array.from(dataByDate.values()).sort((first: any, second: any) => first.date.localeCompare(second.date));
+        });
         // 体重を記録した行動に経験値を付与する
         awardExperience("weight", 10);
         // 日付と数値欄を空にし、プロフィール表示の体重も同期する
@@ -771,6 +789,7 @@ export default function PetForm() {
         // 初回登録だけにプロフィール作成分の経験値を付与する
         if (!hasSavedProfile) {
             awardExperience("profile", 15);
+            shouldScrollToDashboard.current = true;
         }
         // 保存後は入力欄を閉じ、カレンダーなどの機能を表示する
         setHasSavedProfile(true);
@@ -779,9 +798,19 @@ export default function PetForm() {
         alert("ペットのプロフィールを保存しました！");
     };
 
+    if (!isHydrated) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-white p-6 text-slate-600" aria-busy="true">
+                <p className="rounded-full bg-teal-50 px-5 py-3 text-sm font-semibold text-teal-800">
+                    ペット情報を確認しています…
+                </p>
+            </main>
+        );
+    }
+
     // プロフィール、記録グラフ、カレンダー、お世話ノートをまとめて表示する
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen p-6 bg-slate-50">
+        <main className="flex flex-col items-center justify-center min-h-screen p-6 bg-white text-slate-900">
             <div className="w-full max-w-3xl space-y-10">
                 {/* 写真登録、プロフィール入力、成長写真アルバム */}
                 <section className="bg-white p-6 rounded-lg shadow">
@@ -845,35 +874,6 @@ export default function PetForm() {
                         </div>
                     )}
 
-                    {/* プロフィール登録後に成長写真の登録・閲覧を使えるようにする */}
-                    {hasSavedProfile && (
-                    <div className="mb-5 flex flex-col gap-3">
-                        <div className="flex w-full justify-center">
-                            <label className="flex cursor-pointer flex-col items-center">
-                                <div className="flex aspect-square w-full max-w-32 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-4xl text-slate-400 transition-colors hover:border-teal-400 hover:text-teal-600">
-                                    ＋
-                                </div>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleAlbumImageChange}
-                                    className="hidden"
-                                />
-                                <span className="mt-2 text-center text-sm font-semibold text-teal-700 hover:text-teal-900">
-                                    アルバム用写真登録
-                                </span>
-                            </label>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsAlbumOpen(true)}
-                            className="w-full rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-800 transition hover:bg-teal-100"
-                        >
-                            アルバムを見る{albumPhotos.length > 0 ? `（${albumPhotos.length}枚）` : ""}
-                        </button>
-                    </div>
-                    )}
-
                     {(!hasSavedProfile || isEditingProfile) && (
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {/* プロフィールに表示するペットの名前を入力する */}
@@ -923,7 +923,7 @@ export default function PetForm() {
                                             name="gender"
                                             value={option}
                                             checked={gender === option}
-                                            required={option === "オス"}
+                                            required={option === "女の子"}
                                             onChange={(e) => setGender(e.target.value)}
                                             className="h-4 w-4"
                                         />
@@ -985,45 +985,20 @@ export default function PetForm() {
                     )}
                 </section>
 
-                                    {/* プロフィール登録後に成長写真の登録・閲覧を使えるようにする */}
-                    {hasSavedProfile && (
-                    <div className="mb-5 flex flex-col gap-3">
-                        <div className="flex w-full justify-center">
-                            <label className="flex cursor-pointer flex-col items-center">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleAlbumImageChange}
-                                    className="hidden"
-                                />
-                                <span className="mt-2 text-center text-sm font-semibold text-teal-700 hover:text-teal-900">
-                                    アルバム用写真登録
-                                </span>
-                            </label>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsAlbumOpen(true)}
-                            className="w-full rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-800 transition hover:bg-teal-100"
-                        >
-                            アルバムを見る{albumPhotos.length > 0 ? `（${albumPhotos.length}枚）` : ""}
-                        </button>
-                    </div>
-                    )}
-
-
                 {hasSavedProfile && (
                 <>
-                <PetFeatureStudio
-                    petName={name}
-                    profilePhoto={image}
-                    albumPhotos={albumPhotos}
-                    experienceLog={experienceLog}
-                    foodHistory={foodHistory}
-                    graphData={graphData}
-                    memoMap={memoMap}
-                    onAwardExperience={awardExperience}
-                />
+                <div ref={dashboardRef} id="pet-dashboard" className="scroll-mt-4">
+                    <PetFeatureStudio
+                        petName={name}
+                        albumPhotos={albumPhotos}
+                        experienceLog={experienceLog}
+                        foodHistory={foodHistory}
+                        graphData={graphData}
+                        memoMap={memoMap}
+                        onAlbumPhotoChange={handleAlbumImageChange}
+                        onOpenAlbum={() => setIsAlbumOpen(true)}
+                    />
+                </div>
 
 
                 
@@ -1048,10 +1023,10 @@ export default function PetForm() {
                                     {weightMinorTicks.map((tick) => (
                                         <ReferenceLine key={`weight-minor-${tick}`} yAxisId="left" y={tick} stroke="#f3eeeb" strokeWidth={0.7} />
                                     ))}
-                                    {/* 横軸は記録日。月日だけに整形して表示する */}
+                                    {/* 横軸は記録日。西暦を含めて表示する */}
                                     <XAxis
                                         dataKey="date"
-                                        tickFormatter={(value) => String(value).slice(5).replace("-", "/")}
+                                        tickFormatter={(value) => String(value).replaceAll("-", "/")}
                                         tick={{ fontSize: 12, fill: "#655a54", fontWeight: 600 }}
                                         tickLine={false}
                                         axisLine={false}
@@ -1071,6 +1046,12 @@ export default function PetForm() {
                                         tickLine={false}
                                         axisLine={false}
                                         width={46}
+                                        label={{
+                                            value: "体重（kg）",
+                                            angle: 0,
+                                            position: "insideLeft",
+                                            style: { writingMode: "vertical-rl", textOrientation: "mixed", textAnchor: "middle", fill: "#a84c5d", fontSize: 11, fontWeight: 700 },
+                                        }}
                                         allowDataOverflow
                                     />
                                     {/* 右側の縦軸は食事量データに対応する */}
@@ -1080,7 +1061,13 @@ export default function PetForm() {
                                         tick={{ fontSize: 10, fill: "#82766f" }}
                                         tickLine={false}
                                         axisLine={false}
-                                        width={36}
+                                        width={58}
+                                        label={{
+                                            value: "ご飯の量（g）",
+                                            angle: 0,
+                                            position: "insideRight",
+                                            style: { writingMode: "vertical-rl", textOrientation: "mixed", textAnchor: "middle", fill: "#397d72", fontSize: 11, fontWeight: 700 },
+                                        }}
                                     />
                                     {/* 線や点に触れたとき、日付と数値を吹き出し表示する */}
                                     <Tooltip
@@ -1118,7 +1105,7 @@ export default function PetForm() {
                                         connectNulls
                                         dot={{ r: 4, fill: "#fffdfa", stroke: "#62a99b", strokeWidth: 2 }}
                                         activeDot={{ r: 6, fill: "#62a99b", stroke: "#fffdfa", strokeWidth: 2 }}
-                                        label={{ position: "bottom", fill: "#397d72", fontSize: 10, fontWeight: 700, offset: 8 }}
+                                        label={{ position: "top", fill: "#397d72", fontSize: 10, fontWeight: 700, offset: 8 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -1151,6 +1138,20 @@ export default function PetForm() {
                             >
                                 →
                             </button>
+                        </div>
+                    </div>
+
+                    <div className="mb-4 rounded-2xl border border-amber-200 bg-white/85 px-4 py-3 shadow-md">
+                        <p className="mb-2 text-xs font-bold tracking-wide text-amber-800">✨ カレンダーの見かた</p>
+                        <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-700">
+                            <span className="inline-flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-orange-400 text-[14px] text-white shadow-sm" aria-hidden="true">🍽️</span>
+                                色つき：記録済み
+                            </span>
+                            <span className="inline-flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-white text-[14px] text-slate-700 shadow-sm" aria-hidden="true">🍽️</span>
+                                点線枠：リマインダー
+                            </span>
                         </div>
                     </div>
 
@@ -1189,7 +1190,7 @@ export default function PetForm() {
                             // 年に関係なく、誕生日と同じ月日ならお祝い表示を付ける
                             const isBirthday = date.getMonth() === currentMonth.getMonth() && birthday.slice(5) === key.slice(5);
                             const dayIcons = calendarItems
-                                .filter((item) => item.label !== "元気度")
+                                .filter((item) => item.label !== "元気度" && item.storageKey !== "weightHistory")
                                 .map((item) => {
                                     const state = getCalendarIconState(key, item);
                                     if (state === "none") {
@@ -1261,6 +1262,9 @@ export default function PetForm() {
                 {/* 食事・排泄・薬・測定などを一覧で操作するノート */}
                 <section className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-2xl font-bold mb-4">📝 お世話ノート</h2>
+                    <p className="mb-4 inline-flex rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800">
+                        ✓ お世話ができたら、日付のとなりのチェックを入れて記録してね
+                    </p>
                     <div className="overflow-hidden rounded-lg border border-slate-200">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-slate-50 text-slate-600">
@@ -1446,7 +1450,7 @@ export default function PetForm() {
                                                             <div className="flex items-center gap-2">
                                                                 <input
                                                                     type="date"
-                                                                    value={medicineLastGivenDate}
+                                                                    value={medicineLastGivenDate || todayKey}
                                                                     onChange={(e) => setMedicineLastGivenDate(e.target.value)}
                                                                     className="w-32 rounded border border-slate-200 px-2 py-1 text-xs"
                                                                 />

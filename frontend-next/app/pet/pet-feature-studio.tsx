@@ -29,13 +29,13 @@ type AlbumPhoto = {
 
 type PetFeatureStudioProps = {
     petName: string;
-    profilePhoto: string | null;
     albumPhotos: AlbumPhoto[];
     experienceLog: ExperienceAction[];
     foodHistory: FoodRecord[];
     graphData: GraphRecord[];
     memoMap: Record<string, string>;
-    onAwardExperience: (category: string, points: number) => void;
+    onAlbumPhotoChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onOpenAlbum: () => void;
 };
 
 const backgroundThemes = [
@@ -44,13 +44,6 @@ const backgroundThemes = [
     { id: "ocean", label: "なつの海", level: 3, colors: ["#e8f7f5", "#cde9e5"], accent: "#428b8b", icon: "🌊" },
     { id: "autumn", label: "もみじ", level: 4, colors: ["#fff1df", "#f1d7bd"], accent: "#a66c43", icon: "🍁" },
     { id: "snow", label: "ゆきあかり", level: 5, colors: ["#eef5fb", "#d9e8f5"], accent: "#688baa", icon: "❄️" },
-];
-
-const photoFrames = [
-    { id: "spring", label: "春・さくら", icon: "🌸", colors: ["#fff0f5", "#f8d9e7"], accent: "#cb718c", note: "桜の花びらと春色のリボン" },
-    { id: "summer", label: "夏・ひまわり", icon: "🌻", colors: ["#fff7d8", "#f8e5a5"], accent: "#d49a38", note: "ひまわりと明るい夏空" },
-    { id: "autumn", label: "秋・紅葉", icon: "🍁", colors: ["#fff0dd", "#edd0b1"], accent: "#ae7048", note: "紅葉とあたたかな木の実" },
-    { id: "winter", label: "冬・雪", icon: "❄️", colors: ["#eef6fd", "#d7e8f5"], accent: "#6789ac", note: "雪の結晶と冬の星" },
 ];
 
 function titleForPet(level: number, experienceLog: ExperienceAction[]) {
@@ -68,25 +61,15 @@ function titleForPet(level: number, experienceLog: ExperienceAction[]) {
 
 export default function PetFeatureStudio({
     petName,
-    profilePhoto,
     albumPhotos,
     experienceLog,
     foodHistory,
     graphData,
     memoMap,
-    onAwardExperience,
+    onAlbumPhotoChange,
+    onOpenAlbum,
 }: PetFeatureStudioProps) {
     const [selectedThemeId, setSelectedThemeId] = useState("sunny");
-    const [selectedFrameId, setSelectedFrameId] = useState(() => {
-        const month = new Date().getMonth();
-        if ([2, 3, 4].includes(month)) return "spring";
-        if ([5, 6, 7].includes(month)) return "summer";
-        if ([8, 9, 10].includes(month)) return "autumn";
-        return "winter";
-    });
-    const [selectedPhotoId, setSelectedPhotoId] = useState("");
-    const [generatedCard, setGeneratedCard] = useState<string | null>(null);
-    const [cardMessage, setCardMessage] = useState("");
     const [talkMessage, setTalkMessage] = useState("記録を見せてくれたら、いなりちゃんが感想をお話しするにゃ。");
     const [talkIndex, setTalkIndex] = useState(0);
 
@@ -97,11 +80,9 @@ export default function PetFeatureStudio({
     const petTitle = titleForPet(level, experienceLog);
     const unlockedThemes = backgroundThemes.filter((theme) => theme.level <= level);
     const activeTheme = unlockedThemes.find((theme) => theme.id === selectedThemeId) || unlockedThemes[0];
-    const availablePhotos = [
-        ...(profilePhoto ? [{ id: "profile", src: profilePhoto, date: "" }] : []),
-        ...albumPhotos,
-    ];
-    const activePhoto = availablePhotos.find((photo) => photo.id === selectedPhotoId) || availablePhotos[0];
+    const recentPhotos = [...albumPhotos]
+        .sort((first, second) => second.date.localeCompare(first.date) || second.id.localeCompare(first.id))
+        .slice(0, 3);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem("petBackgroundTheme");
@@ -113,80 +94,6 @@ export default function PetFeatureStudio({
     const selectTheme = (themeId: string) => {
         setSelectedThemeId(themeId);
         localStorage.setItem("petBackgroundTheme", themeId);
-    };
-
-    const createPhotoCard = () => {
-        if (!activePhoto) {
-            setCardMessage("先にプロフィール写真かアルバム写真を登録してください。");
-            return;
-        }
-
-        const frame = photoFrames.find((entry) => entry.id === selectedFrameId) || photoFrames[0];
-        const source = new window.Image();
-        source.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 1080;
-            canvas.height = 1350;
-            const context = canvas.getContext("2d");
-            if (!context) {
-                setCardMessage("カード画像を作れませんでした。もう一度お試しください。");
-                return;
-            }
-
-            const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-            background.addColorStop(0, frame.colors[0]);
-            background.addColorStop(1, frame.colors[1]);
-            context.fillStyle = background;
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            context.strokeStyle = frame.accent;
-            context.lineWidth = 12;
-            context.beginPath();
-            context.roundRect(34, 34, canvas.width - 68, canvas.height - 68, 44);
-            context.stroke();
-
-            context.textAlign = "center";
-            context.fillStyle = "#56463f";
-            context.font = "700 54px 'M PLUS Rounded 1c', sans-serif";
-            context.fillText("うちの子カード", canvas.width / 2, 132);
-            context.font = "42px sans-serif";
-            context.fillText(`${frame.icon}   ${frame.icon}   ${frame.icon}`, canvas.width / 2, 198);
-
-            const photoX = 130;
-            const photoY = 250;
-            const photoSize = 820;
-            const scale = Math.max(photoSize / source.width, photoSize / source.height);
-            const drawWidth = source.width * scale;
-            const drawHeight = source.height * scale;
-            context.save();
-            context.beginPath();
-            context.roundRect(photoX, photoY, photoSize, photoSize, 42);
-            context.clip();
-            context.drawImage(source, photoX + (photoSize - drawWidth) / 2, photoY + (photoSize - drawHeight) / 2, drawWidth, drawHeight);
-            context.restore();
-
-            context.strokeStyle = "rgba(255, 255, 255, 0.94)";
-            context.lineWidth = 14;
-            context.beginPath();
-            context.roundRect(photoX, photoY, photoSize, photoSize, 42);
-            context.stroke();
-
-            context.fillStyle = "#493d39";
-            context.font = "700 58px 'M PLUS Rounded 1c', sans-serif";
-            context.fillText(petName || "うちの子", canvas.width / 2, 1168);
-            context.fillStyle = frame.accent;
-            context.font = "700 34px 'M PLUS Rounded 1c', sans-serif";
-            context.fillText(`Lv.${level}  ${petTitle}`, canvas.width / 2, 1230);
-            context.fillStyle = "#766760";
-            context.font = "28px 'M PLUS Rounded 1c', sans-serif";
-            context.fillText(frame.note, canvas.width / 2, 1282);
-
-            setGeneratedCard(canvas.toDataURL("image/png"));
-            setCardMessage("カードができました。画像を保存してSNSでシェアできます。");
-            onAwardExperience("card", 15);
-        };
-        source.onerror = () => setCardMessage("写真を読み込めませんでした。別の写真を選んでください。");
-        source.src = activePhoto.src;
     };
 
     const generateTalk = () => {
@@ -229,6 +136,7 @@ export default function PetFeatureStudio({
                         <p className="text-xs font-bold uppercase text-slate-500">Nyan Level</p>
                         <h2 className="mt-1 text-2xl font-bold text-slate-800">{activeTheme.icon} Lv.{level} · {petTitle}</h2>
                         <p className="mt-1 text-sm text-slate-600">{experience} XP · 次のレベルまであと {nextLevelPoints} XP</p>
+                        <p className="mt-2 text-xs font-medium text-slate-600">お世話の記録や写真登録でXPをためて、100XPごとにレベルアップ！</p>
                     </div>
                     <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-slate-600">{petName || "うちの子"}</span>
                 </div>
@@ -257,58 +165,62 @@ export default function PetFeatureStudio({
                 </div>
             </section>
 
-            <section className="rounded-lg border border-sky-100 bg-white p-5 shadow-sm">
-                <div className="mb-4">
-                    <h2 className="text-xl font-bold text-slate-800">📸 うちの子カード</h2>
-                    <p className="mt-1 text-xs text-slate-500">季節のフレーム付き・SNS向け縦長カード</p>
+            <section className="overflow-hidden rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-5 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-xs font-bold tracking-[0.2em] text-rose-400">LITTLE MOMENTS</p>
+                        <h2 className="mt-1 text-xl font-bold text-slate-800">📷 最近のアルバム</h2>
+                    </div>
+                    <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm">
+                        {albumPhotos.length}枚の思い出
+                    </span>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <label className="flex flex-col gap-1 text-sm font-semibold text-slate-600">
-                        写真
-                        <select
-                            value={activePhoto?.id || ""}
-                            onChange={(event) => setSelectedPhotoId(event.target.value)}
-                            className="rounded-md border border-slate-200 bg-white px-3 py-2"
-                            disabled={availablePhotos.length === 0}
-                        >
-                            {availablePhotos.length === 0 ? (
-                                <option value="">写真を先に登録してください</option>
-                            ) : (
-                                availablePhotos.map((photo, index) => (
-                                    <option key={photo.id} value={photo.id}>{photo.id === "profile" ? "プロフィール写真" : `アルバム写真 ${index + 1}`}</option>
-                                ))
-                            )}
-                        </select>
+                {recentPhotos.length > 0 ? (
+                    <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+                        {recentPhotos.map((photo, index) => (
+                            <button
+                                key={photo.id}
+                                type="button"
+                                onClick={onOpenAlbum}
+                                className={`group relative aspect-square overflow-hidden rounded-xl border-4 border-white bg-white shadow-md transition hover:-translate-y-1 hover:shadow-lg ${index === 1 ? "sm:mt-3" : ""}`}
+                                aria-label={`アルバムを見る: ${photo.date}の写真`}
+                            >
+                                <img
+                                    src={photo.src}
+                                    alt={`${photo.date}に登録した写真`}
+                                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                />
+                                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/70 to-transparent px-2 pb-2 pt-5 text-left text-[10px] font-medium text-white sm:text-xs">
+                                    {photo.date}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="mb-4 rounded-xl border border-dashed border-rose-200 bg-white/70 px-4 py-6 text-center text-sm text-slate-500">
+                        写真を登録すると、最近の3枚がここに並びます 🐾
+                    </p>
+                )}
+                <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-700">
+                        <span aria-hidden="true">＋</span>
+                        アルバム用写真登録
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={onAlbumPhotoChange}
+                            className="hidden"
+                        />
                     </label>
                     <button
                         type="button"
-                        onClick={createPhotoCard}
-                        disabled={availablePhotos.length === 0}
-                        className="rounded-md bg-sky-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
+                        onClick={onOpenAlbum}
+                        className="rounded-xl border border-teal-200 bg-white px-4 py-3 text-sm font-bold text-teal-800 shadow-sm transition hover:bg-teal-50"
                     >
-                        カードを作る
+                        アルバムを見る{albumPhotos.length > 0 ? `（${albumPhotos.length}枚）` : ""}
                     </button>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="季節フレーム">
-                    {photoFrames.map((frame) => (
-                        <button
-                            key={frame.id}
-                            type="button"
-                            onClick={() => setSelectedFrameId(frame.id)}
-                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${selectedFrameId === frame.id ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-600"}`}
-                            aria-pressed={selectedFrameId === frame.id}
-                        >
-                            {frame.icon} {frame.label}
-                        </button>
-                    ))}
-                </div>
-                {cardMessage && <p className="mt-3 text-sm text-slate-600" role="status">{cardMessage}</p>}
-                {generatedCard && (
-                    <div className="mt-4 flex flex-col items-center gap-3 border-t border-slate-100 pt-4">
-                        <img src={generatedCard} alt={`${petName || "うちの子"}の季節カード`} className="max-h-[480px] w-auto rounded-lg border border-slate-200 shadow-md" />
-                        <a href={generatedCard} download={`${petName || "うちの子"}-card.png`} className="rounded-md border border-sky-200 px-4 py-2 text-sm font-bold text-sky-800 hover:bg-sky-50">カード画像を保存</a>
-                    </div>
-                )}
+                <p className="mt-3 text-center text-xs text-rose-400" aria-hidden="true">✦　大切な思い出をいつでも見返そう　✦</p>
             </section>
 
             <section className="rounded-lg border border-rose-100 bg-white p-5 shadow-sm">
